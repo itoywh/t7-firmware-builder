@@ -106,7 +106,9 @@ jobs:
           diff <(grep '^CONFIG_PACKAGE' defconfig/mt7981-ax3000.config | sort) \
                <(grep '^CONFIG_PACKAGE' .config | grep -v '^# ' | sort) || true
           echo "=== Target Device ==="
-          grep 'CONFIG_TARGET_mediatek_mt7981_DEVICE' .config | grep -v '^# '
+          grep 'CONFIG_TARGET_mediatek_mt7981_DEVICE' .config | grep -v '^# ' || true
+          echo "=== Full Target Line ==="
+          grep 'CONFIG_TARGET_mediatek_mt7981' .config | grep '=y' | grep -v '^# ' || grep 'CONFIG_TARGET_DEVICE' .config | grep -v '^# ' || true
 
       - name: Download all source packages
         run: |
