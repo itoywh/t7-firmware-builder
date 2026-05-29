@@ -157,24 +157,27 @@ jobs:
           path: openwrt/dl
           key: dl-t7-${{ hashFiles('feeds.conf.default') }}
 
-      - name: Collect output files
+- name: Collect output files
         run: |
+          set -euo pipefail
           mkdir -p output
-          # Detect actual output dir (padavanonly uses filogic, not mt7981)
-          TARGET_DIR=$(find openwrt/bin/targets -maxdepth 2 -name "*.manifest" 2>/dev/null | head -1 | xargs dirname 2>/dev/null || echo "openwrt/bin/targets/mediatek/filogic")
-          [ -z "$TARGET_DIR" ] && TARGET_DIR="openwrt/bin/targets/mediatek/filogic"
+          # Deterministic path for padavanonly/immortalwrt-mt798x-6.6 MT7981
+          # (padavanonly uses filogic, not mt7981)
+          TARGET_DIR="openwrt/bin/targets/mediatek/filogic"
           echo "=== Build output dir: $TARGET_DIR ==="
-          ls -lh "$TARGET_DIR/" 2>/dev/null || { echo "ERROR: No output found!"; exit 1; }
-          # Copy squashfs images
-          cp "$TARGET_DIR"/*squashfs* output/ 2>/dev/null || { echo "ERROR: No squashfs found!"; exit 1; }
-          # Copy other useful files
+          ls -lh "$TARGET_DIR/"
+          # Copy ONLY squashfs images (the actual firmware, ~6-10MB each)
+          find "$TARGET_DIR" -maxdepth 1 -name "*squashfs*" -exec cp {} output/ \;
+          [ -n "$(ls output/*squashfs* 2>/dev/null)" ] || { echo "ERROR: No squashfs found!"; exit 1; }
+          # Copy manifest and checksums (small files)
           cp "$TARGET_DIR"/*.manifest output/ 2>/dev/null || true
           cp "$TARGET_DIR"/sha256sums output/ 2>/dev/null || true
           # Save the final config for reference
           cp openwrt/.config output/config-final.txt
           echo "=== Collected files ==="
           ls -lh output/
-
+          echo "=== Total size ==="
+          du -sh output/
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
