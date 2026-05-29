@@ -157,7 +157,7 @@ jobs:
           path: openwrt/dl
           key: dl-t7-${{ hashFiles('feeds.conf.default') }}
 
-- name: Collect output files
+      - name: Collect output files
         run: |
           set -euo pipefail
           mkdir -p output
