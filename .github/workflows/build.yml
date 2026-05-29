@@ -44,6 +44,16 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Copy preset files (opkg USTC mirror, etc.)
+        run: |
+          # Copy custom files into OpenWrt source tree
+          # These override auto-generated configs in the final image
+          if [ -d files ]; then
+            cp -r files/* openwrt/files/
+            echo "=== Copied files ==="
+            find openwrt/files/ -type f
+          fi
+
       - name: Generate .config from defconfig
         run: |
           cd openwrt
