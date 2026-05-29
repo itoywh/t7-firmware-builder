@@ -160,11 +160,13 @@ jobs:
       - name: Collect output files
         run: |
           mkdir -p output
-          TARGET_DIR="openwrt/bin/targets/mediatek/mt7981"
-          echo "=== Build output ==="
-          ls -lh "$TARGET_DIR/" 2>/dev/null || echo "No output in $TARGET_DIR"
+          # Detect actual output dir (padavanonly uses filogic, not mt7981)
+          TARGET_DIR=$(find openwrt/bin/targets -maxdepth 2 -name "*.manifest" 2>/dev/null | head -1 | xargs dirname 2>/dev/null || echo "openwrt/bin/targets/mediatek/filogic")
+          [ -z "$TARGET_DIR" ] && TARGET_DIR="openwrt/bin/targets/mediatek/filogic"
+          echo "=== Build output dir: $TARGET_DIR ==="
+          ls -lh "$TARGET_DIR/" 2>/dev/null || { echo "ERROR: No output found!"; exit 1; }
           # Copy squashfs images
-          cp "$TARGET_DIR"/*squashfs* output/ 2>/dev/null || true
+          cp "$TARGET_DIR"/*squashfs* output/ 2>/dev/null || { echo "ERROR: No squashfs found!"; exit 1; }
           # Copy other useful files
           cp "$TARGET_DIR"/*.manifest output/ 2>/dev/null || true
           cp "$TARGET_DIR"/sha256sums output/ 2>/dev/null || true
