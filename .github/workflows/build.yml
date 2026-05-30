@@ -46,16 +46,16 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ~/.ccache
-          key: ccache-t7-${{ hashFiles('feeds.conf.default') }}-${{ github.run_number }}
+          key: ccache-t7-${.hashFiles('feeds.conf.default')}-${.github.run_number}
           restore-keys: |
-            ccache-t7-${{ hashFiles('feeds.conf.default') }}-
+            ccache-t7-${.hashFiles('feeds.conf.default')}-
             ccache-t7-
 
       - name: Restore dl cache
         uses: actions/cache/restore@v4
         with:
           path: openwrt/dl
-          key: dl-t7-${{ hashFiles('feeds.conf.default') }}
+          key: dl-t7-${.hashFiles('feeds.conf.default')}
 
       - name: Apply custom feeds
         run: |
@@ -79,25 +79,26 @@ jobs:
           cd openwrt
           # Start from MT7981 base config (multi-device)
           cat defconfig/mt7981-ax3000.config > .config
-          # Switch to single device: 360 T7 108M
-          sed -i 's/^CONFIG_TARGET_MULTI_PROFILE=y$/# CONFIG_TARGET_MULTI_PROFILE is not set/' .config
-          sed -i 's/^CONFIG_TARGET_PER_DEVICE_ROOTFS=y$/# CONFIG_TARGET_PER_DEVICE_ROOTFS is not set/' .config
+          # Switch to single device: 360 T7 (qihoo_360t7)
+          sed -i 's^CONFIG_TARGET_MULTI_PROFILE=y$/# CONFIG_TARGET_MULTI_PROFILE is not set/' .config
+          sed -i 's^CONFIG_TARGET_PER_DEVICE_ROOTFS=y$/# CONFIG_TARGET_PER_DEVICE_ROOTFS is not set/' .config
           # Enable only 360 T7 device
-          echo "CONFIG_TARGET_mediatek_mt7981_DEVICE_mt7981-360-t7-108M=y" >> .config
+          # Note: padavanonly repo uses filogic subtarget and qihoo_360t7 device name
+          echo "CONFIG_TARGET_mediatek_filogic_DEVICE_qihoo_360t7=y" >> .config
 
       - name: Customize packages
         run: |
           cd openwrt
           # === Remove unwanted packages ===
           # eqos-mtk (MTK QoS, not needed)
-          sed -i 's/^CONFIG_PACKAGE_luci-app-eqos-mtk=y$/# CONFIG_PACKAGE_luci-app-eqos-mtk is not set/' .config
-          sed -i 's/^CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn=y$/# CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn is not set/' .config
+          sed -i 's^CONFIG_PACKAGE_luci-app-eqos-mtk=y$/# CONFIG_PACKAGE_luci-app-eqos-mtk is not set/' .config
+          sed -i 's^CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn=y$/# CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn is not set/' .config
           # wrtbwmon (bandwidth monitor, not needed)
-          sed -i 's/^CONFIG_PACKAGE_luci-app-wrtbwmon=y$/# CONFIG_PACKAGE_luci-app-wrtbwmon is not set/' .config
+          sed -i 's^CONFIG_PACKAGE_luci-app-wrtbwmon=y$/# CONFIG_PACKAGE_luci-app-wrtbwmon is not set/' .config
           # bootstrap-mod theme (user uses default or argon)
-          sed -i 's/^CONFIG_PACKAGE_luci-theme-bootstrap-mod=y$/# CONFIG_PACKAGE_luci-theme-bootstrap-mod is not set/' .config
+          sed -i 's^CONFIG_PACKAGE_luci-theme-bootstrap-mod=y$/# CONFIG_PACKAGE_luci-theme-bootstrap-mod is not set/' .config
           # zram-swap (512MB is enough)
-          sed -i 's/^CONFIG_PACKAGE_zram-swap=y$/# CONFIG_PACKAGE_zram-swap is not set/' .config
+          sed -i 's^CONFIG_PACKAGE_zram-swap=y$/# CONFIG_PACKAGE_zram-swap is not set/' .config
 
           # === Add PassWall2 + sing-box core ===
           echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
@@ -126,12 +127,11 @@ jobs:
         run: |
           cd openwrt
           echo "=== Packages Diff (added/removed vs defconfig) ==="
-          diff <(grep '^CONFIG_PACKAGE' defconfig/mt7981-ax3000.config | sort) \
-               <(grep '^CONFIG_PACKAGE' .config | grep -v '^# ' | sort) || true
+          diff <(grep '^CONFIG_PACKAGE' defconfig/mt7981-ax3000.config | sort) <(grep '^CONFIG_PACKAGE' .config | grep -v '^# ' | sort) || true
           echo "=== Target Device ==="
-          grep 'CONFIG_TARGET_mediatek_mt7981_DEVICE' .config | grep -v '^# ' || true
-          echo "=== Full Target Line ==="
-          grep 'CONFIG_TARGET_mediatek_mt7981' .config | grep '=y' | grep -v '^# ' || grep 'CONFIG_TARGET_DEVICE' .config | grep -v '^# ' || true
+          grep 'CONFIG_TARGET_mediatek_filogic_DEVICE' .config | grep -v '^# ' || true
+          echo "=== Profile ==="
+          grep 'CONFIG_TARGET_PROFILE' .config | grep -v '^# ' || true
 
       - name: Download all source packages
         run: |
@@ -148,14 +148,14 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ~/.ccache
-          key: ccache-t7-${{ hashFiles('feeds.conf.default') }}-${{ github.run_number }}
+          key: ccache-t7-${.hashFiles('feeds.conf.default')}-${.github.run_number}
 
       - name: Save dl cache
         if: always()
         uses: actions/cache/save@v4
         with:
           path: openwrt/dl
-          key: dl-t7-${{ hashFiles('feeds.conf.default') }}
+          key: dl-t7-${.hashFiles('feeds.conf.default')}
 
       - name: Collect output files
         run: |
@@ -166,7 +166,7 @@ jobs:
           TARGET_DIR="openwrt/bin/targets/mediatek/filogic"
           echo "=== Build output dir: $TARGET_DIR ==="
           ls -lh "$TARGET_DIR/"
-          # Copy ONLY squashfs images (the actual firmware, ~6-10MB each)
+          # Copy ONLY squashfs images (the actual firmware, ~610MH each)
           find "$TARGET_DIR" -maxdepth 1 -name "*squashfs*" -exec cp {} output/ \;
           [ -n "$(ls output/*squashfs* 2>/dev/null)" ] || { echo "ERROR: No squashfs found!"; exit 1; }
           # Copy manifest and checksums (small files)
@@ -178,9 +178,10 @@ jobs:
           ls -lh output/
           echo "=== Total size ==="
           du -sh output/
+
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ImmortalWrt-T7-108M-${{ env.REPO_SHA }}
+          name: ImmortalWrt-T7-${{ env.REPO_SHA }}
           path: output/
           retention-days: 30
