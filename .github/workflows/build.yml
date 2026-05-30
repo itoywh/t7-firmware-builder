@@ -80,8 +80,8 @@ jobs:
           # Start from MT7981 base config (multi-device)
           cat defconfig/mt7981-ax3000.config > .config
           # Switch to single device: 360 T7 (qihoo_360t7)
-          sed -i 's^CONFIG_TARGET_MULTI_PROFILE=y$/# CONFIG_TARGET_MULTI_PROFILE is not set^' .config
-          sed -i 's^CONFIG_TARGET_PER_DEVICE_ROOTFS=y$/# CONFIG_TARGET_PER_DEVICE_ROOTFS is not set^' .config
+          sed -i 's^CONFIG_TARGET_MULTI_PROFILE=y$^# CONFIG_TARGET_MULTI_PROFILE is not set^' .config
+          sed -i 's^CONFIG_TARGET_PER_DEVICE_ROOTFS=y$^# CONFIG_TARGET_PER_DEVICE_ROOTFS is not set^' .config
           # Enable only 360 T7 device
           # Note: padavanonly repo uses filogic subtarget and qihoo_360t7 device name
           echo "CONFIG_TARGET_mediatek_filogic_DEVICE_qihoo_360t7=y" >> .config
@@ -91,14 +91,14 @@ jobs:
           cd openwrt
           # === Remove unwanted packages ===
           # eqos-mtk (MTK QoS, not needed)
-          sed -i 's^CONFIG_PACKAGE_luci-app-eqos-mtk=y$/# CONFIG_PACKAGE_luci-app-eqos-mtk is not set^' .config
-          sed -i 's^CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn=y$/# CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn is not set^' .config
+          sed -i 's^CONFIG_PACKAGE_luci-app-eqos-mtk=y$^# CONFIG_PACKAGE_luci-app-eqos-mtk is not set^' .config
+          sed -i 's^CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn=y$^# CONFIG_PACKAGE_luci-i18n-eqos-mtk-zh-cn is not set^' .config
           # wrtbwmon (bandwidth monitor, not needed)
-          sed -i 's^CONFIG_PACKAGE_luci-app-wrtbwmon=y$/# CONFIG_PACKAGE_luci-app-wrtbwmon is not set^' .config
+          sed -i 's^CONFIG_PACKAGE_luci-app-wrtbwmon=y$^# CONFIG_PACKAGE_luci-app-wrtbwmon is not set^' .config
           # bootstrap-mod theme (user uses default or argon)
-          sed -i 's^CONFIG_PACKAGE_luci-theme-bootstrap-mod=y$/# CONFIG_PACKAGE_luci-theme-bootstrap-mod is not set^' .config
+          sed -i 's^CONFIG_PACKAGE_luci-theme-bootstrap-mod=y$^# CONFIG_PACKAGE_luci-theme-bootstrap-mod is not set^' .config
           # zram-swap (512MB is enough)
-          sed -i 's^CONFIG_PACKAGE_zram-swap=y$/# CONFIG_PACKAGE_zram-swap is not set^' .config
+          sed -i 's^CONFIG_PACKAGE_zram-swap=y$^# CONFIG_PACKAGE_zram-swap is not set^' .config
 
           # === Add PassWall2 + sing-box core ===
           echo "CONFIG_PACKAGE_luci-app-passwall2=y" >> .config
