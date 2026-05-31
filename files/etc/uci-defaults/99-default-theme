@@ -1,0 +1,9 @@
+#!/bin/sh
+# 设置 Argon 为默认 LuCI 主题
+# 2026-05-31
+
+uci -q get luci.main.mediaurlbase >/dev/null && {
+    uci set luci.main.mediaurlbase='/luci-static/argon'
+    uci commit luci
+}
+exit 0
