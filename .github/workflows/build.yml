@@ -12,6 +12,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 360
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout builder repo
@@ -105,11 +107,6 @@ jobs:
           echo "CONFIG_PACKAGE_luci-i18n-passwall2-zh-cn=y" >> .config
           echo "CONFIG_PACKAGE_sing-box=y" >> .config
 
-          # === LuCI 核心中文语言包（界面中文显示）=== # 2026-05-31
-          echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
-          echo "CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y" >> .config
-          echo "CONFIG_PACKAGE_luci-i18n-opkg-zh-cn=y" >> .config
-
           # === LuCI 核心中文语言包（界面中文显示）===
           echo "CONFIG_PACKAGE_luci-i18n-base-zh-cn=y" >> .config
           echo "CONFIG_PACKAGE_luci-i18n-firewall-zh-cn=y" >> .config
@@ -176,7 +173,7 @@ jobs:
           TARGET_DIR="openwrt/bin/targets/mediatek/filogic"
           echo "=== Build output dir: $TARGET_DIR ==="
           ls -lh "$TARGET_DIR/"
-          # Copy ONLY squashfs images (the actual firmware, ~610MH each)
+          # Copy ONLY squashfs images (the actual firmware)
           find "$TARGET_DIR" -maxdepth 1 -name "*squashfs*" -exec cp {} output/ \;
           [ -n "$(ls output/*squashfs* 2>/dev/null)" ] || { echo "ERROR: No squashfs found!"; exit 1; }
           # Copy manifest and checksums (small files)
@@ -195,3 +192,39 @@ jobs:
           name: ImmortalWrt-T7-${{ env.REPO_SHA }}
           path: output/
           retention-days: 30
+
+      - name: Create GitHub Release
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > /tmp/release-notes.md << 'EOF'
+          ## Changelog
+
+          编译自 [padavanonly/immortalwrt-mt798x-6.6](https://github.com/padavanonly/immortalwrt-mt798x-6.6) @ openwrt-24.10-6.6
+
+          ## 预装
+
+          | 包 | 说明 |
+          |----|------|
+          | luci-app-passwall2 | 科学上网 |
+          | sing-box | sing-box 核心 |
+          | luci-app-upnp | UPnP 端口转发 |
+          | htop / tcpdump | 系统工具 |
+          | kmod-tcp-bbr | TCP BBR 拥塞控制 |
+
+          ## 默认配置
+
+          | 项目 | 值 |
+          |------|-----|
+          | IP | 192.168.6.1 |
+          | 用户 | root |
+          | 密码 | 无 (SSH 已开) |
+          | WiFi | 关闭 |
+          | 主题 | argon |
+          EOF
+
+          gh release create "v${{ github.run_number }}-${{ env.REPO_SHA }}" output/* \
+            --repo "${{ github.repository }}" \
+            --title "v${{ github.run_number }}-${{ env.REPO_SHA }}" \
+            --notes-file /tmp/release-notes.md
